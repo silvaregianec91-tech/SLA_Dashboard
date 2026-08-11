@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BV Transportes — Dashboard de Operações</title>
+<style>
+:root{
+  --primary:#F58634; --primary-d:#C2410C; --primary-l:#FFB37A;
+  --accent:#FFB400; --accent-d:#E59A00; --accent-l:#FFD54F;
+  --success:#2E7D32; --danger:#D93025; --warn:#E59A00;
+  --gray:#616161; --gray-l:#9E9E9E; --dark:#37474F;
+  --line:#E5E0D8; --bg:#F6F4F0; --card:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:#202124;font-size:14px}
+header{background:linear-gradient(120deg,#9A3304 0%,#D95F0B 35%,#F58634 70%,#FFB400 100%);color:#fff;padding:18px 24px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+header .brand{display:flex;align-items:center;gap:12px}
+header .logo-badge{width:38px;height:38px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#C2410C;letter-spacing:.5px;flex:0 0 auto}
+header h1{font-size:20px;font-weight:700;letter-spacing:.2px}
+header .sub{font-size:12.5px;opacity:.95;margin-top:2px}
+.filters{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;background:var(--card);border-bottom:1px solid var(--line);padding:12px 24px;position:sticky;top:0;z-index:10}
+.f-group{display:flex;flex-direction:column;gap:4px}
+.f-group label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);font-weight:600}
+select,input[type=date]{padding:7px 10px;border:1px solid #CFC8BE;border-radius:6px;font-size:13px;background:#fff;color:#202124}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets button{padding:7px 12px;border:1px solid #CFC8BE;border-radius:6px;background:#fff;cursor:pointer;font-size:12.5px;color:#202124}
+.presets button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+#ctxInfo{font-size:12.5px;color:var(--gray);align-self:center;padding:6px 0}
+.tabs{display:flex;gap:4px;padding:10px 24px 0;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{padding:9px 14px;border:none;background:transparent;cursor:pointer;font-size:13px;color:var(--gray);border-bottom:3px solid transparent;white-space:nowrap;font-weight:500}
+.tab.active{color:var(--primary-d);border-bottom-color:var(--primary);font-weight:700}
+main{padding:18px 24px;max-width:1500px;margin:0 auto}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;border-top:3px solid var(--primary)}
+.kpi.k-warn{border-top-color:var(--accent)}
+.kpi.k-bad{border-top-color:var(--danger)}
+.kpi.k-good{border-top-color:var(--success)}
+.kpi .k-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray);font-weight:600}
+.kpi .k-val{font-size:24px;font-weight:700;margin-top:4px}
+.kpi .k-val small{font-size:13px;color:var(--gray);font-weight:500}
+.kpi .k-sub{font-size:11.5px;color:var(--gray);margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:16px;margin-bottom:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.panel h3{font-size:14px;margin-bottom:12px;color:#202124;display:flex;justify-content:space-between;align-items:center}
+.panel h3 .hint{font-size:11.5px;color:var(--gray);font-weight:400}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{position:sticky;top:0;background:#F4F1EC;text-align:left;padding:7px 8px;border-bottom:2px solid var(--line);font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--gray)}
+td{padding:6px 8px;border-bottom:1px solid #EFECE7;white-space:nowrap}
+tr:hover td{background:#FDF9F4}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl-wrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.pos{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:#FDE6D4;color:var(--primary-d);font-weight:700;font-size:11px}
+.pos.t1{background:#FFF0C2;color:#9A3304}.pos.t2{background:#FFE1B8;color:#B45309}.pos.t3{background:#E9E5DF;color:var(--dark)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge.ok{background:#E4F2E5;color:var(--success)} .badge.bad{background:#FBE3E1;color:var(--danger)} .badge.warn{background:#FFF0C2;color:#9A3304} .badge.neutral{background:#E9E5DF;color:var(--gray)}
+.hrow{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.hlabel{flex:0 0 170px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;color:#3c4043}
+.hbar{flex:1;background:#F4F1EC;border-radius:4px;height:18px;overflow:hidden;display:flex}
+.hbar-fill{height:100%;border-radius:4px;min-width:2px}
+.hval{flex:0 0 80px;font-size:12px;font-variant-numeric:tabular-nums;color:var(--gray)}
+.hrow.stack .hbar>div{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--gray)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.donut-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;flex:0 0 auto}
+.empty{padding:40px;text-align:center;color:var(--gray);font-size:13px}
+.center{text-align:center}
+.svg-wrap{width:100%}
+.axis{font-size:10px;fill:var(--gray)}
+.grid-line{stroke:#E5E0D8;stroke-width:1}
+.detail-link{cursor:pointer;color:var(--primary-d);font-size:12px;text-decoration:underline}
+footer{color:var(--gray);font-size:11.5px;padding:16px 24px 30px;text-align:center}
+@media print{header,.filters,.tabs{display:none}main{padding:0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo-badge">BV</div>
+    <div>
+      <h1>BV Transportes — Dashboard de Operações</h1>
+      <div class="sub">SLA · Rotas · Motoristas · Ocorrências · Indicadores — Análises da transportadora BV Transportes</div>
+    </div>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="f-group">
+    <label>Rota</label>
+    <select id="fR"></select>
+  </div>
+  <div class="f-group">
+    <label>Período (mês)</label>
+    <div class="presets" id="fPresets">
+      <button data-p="*" class="active">Todos</button>
+      <button data-p="Maio">Maio</button>
+      <button data-p="Junho">Junho</button>
+      <button data-p="Julho">Julho</button>
+      <button data-p="Agosto">Agosto</button>
+    </div>
+  </div>
+  <div class="f-group">
+    <label>Data de</label>
+    <input type="date" id="fFrom">
+  </div>
+  <div class="f-group">
+    <label>até</label>
+    <input type="date" id="fTo">
+  </div>
+  <span id="ctxInfo"></span>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="geral">Visão Geral</button>
+  <button class="tab" data-tab="rotas">Rotas</button>
+  <button class="tab" data-tab="mot">Motoristas</button>
+  <button class="tab" data-tab="occ">Ocorrências</button>
+  <button class="tab" data-tab="base">Base Diária</button>
+  <button class="tab" data-tab="ind">Indicadores</button>
+  <button class="tab" data-tab="infra">Infraestrutura</button>
+</nav>
+
+<main>
+  <section id="tab-geral" class="tab-pane active">
+    <div class="cards" id="g-kpis"></div>
+    <div class="grid">
+      <div class="panel"><h3>SLA diário <span class="hint">média do SLA por dia</span></h3><div class="svg-wrap" id="g-line"></div><div class="legend" id="g-legend"></div></div>
+      <div class="panel"><h3>Distribuição do SLA <span class="hint">faixas de SLA das rotas</span></h3><div id="g-dist"></div></div>
+    </div>
+    <div class="panel">
+      <h3>Ocorrências recentes <span class="hint">rotas com SLA abaixo de 100%</span></h3>
+      <div class="tbl-wrap" id="g-occ"></div>
+    </div>
+  </section>
+
+  <section id="tab-rotas" class="tab-pane">
+    <div class="panel">
+      <h3>Resumo por rota <span class="hint">rotas com mais ocorrências primeiro</span></h3>
+      <div class="tbl-wrap" id="r-table"></div>
+    </div>
+    <div class="grid">
+      <div class="panel"><h3>Rotas com mais ocorrências (top 12)</h3><div id="r-chart"></div></div>
+      <div class="panel"><h3>Rotas com melhor SLA (top 12)</h3><div id="r-best"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-mot" class="tab-pane">
+    <div class="cards" id="m-kpis"></div>
+    <div class="panel">
+      <h3>Ranking de motoristas <span class="hint">por SLA médio (peso pelas rotas)</span></h3>
+      <div class="tbl-wrap" id="m-table"></div>
+    </div>
+    <div class="grid">
+      <div class="panel"><h3>Melhores motoristas (top 8)</h3><div id="m-best"></div></div>
+      <div class="panel"><h3>Motoristas que precisam de atenção (8 piores)</h3><div id="m-worst"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-occ" class="tab-pane">
+    <div class="cards" id="o-kpis"></div>
+    <div class="panel">
+      <h3>Todas as ocorrências <span class="hint">rotas com SLA abaixo de 100%</span></h3>
+      <div class="tbl-wrap" id="o-table"></div>
+    </div>
+  </section>
+
+  <section id="tab-base" class="tab-pane">
+    <div class="cards" id="b-kpis"></div>
+    <div class="panel">
+      <h3>Base do dia <span class="hint">rotas programadas e justificativas</span></h3>
+      <div class="tbl-wrap" id="b-table"></div>
+    </div>
+  </section>
+
+  <section id="tab-ind" class="tab-pane">
+    <div class="cards" id="i-kpis"></div>
+    <div class="grid">
+      <div class="panel"><h3>Indicadores do dia <span class="hint">média diária com base nas rotas</span></h3><div id="i-chart"></div></div>
+      <div class="panel"><h3>Uso do aplicativo <span class="hint">check-in e partida registrados no app</span></h3><div id="i-app-donut"></div><div id="i-app-obstacles"></div></div>
+    </div>
+    <div class="panel">
+      <h3>Indicadores por rota <span class="hint">check-in, saída, chegada, transit time e app</span></h3>
+      <div class="tbl-wrap" id="i-table"></div>
+    </div>
+  </section>
+
+  <section id="tab-infra" class="tab-pane">
+    <div class="grid">
+      <div class="panel"><h3>Bases <span class="hint">siglas e endereços</span></h3><div class="tbl-wrap" id="i-bases"></div></div>
+      <div class="panel"><h3>Veículos <span class="hint">frota da BV Transportes</span></h3><div class="tbl-wrap" id="i-veic"></div></div>
+    </div>
+  </section>
+</main>
+
+<footer>Gerado automaticamente a partir da planilha da BV Transportes. Filtros de rota e período atualizam as análises de SLA, rotas e ocorrências.</footer>
+
+<script>
+"use strict";
+var RAW = {"base":[{"d":"2026-08-11","r":"SP2-GHO-JDS-B","drv":"NOEMI DINIZ","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP2-BTV-CQL-B","drv":"LEONEL SILVA CORDEIRO","perfil":"HR","idv":"NÃO","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"SEM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP1-SUZ-GNZ-B","drv":"RENATO DE OLIVEIRA CORREA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP1-VLB-SPL-B","drv":"RENAN DA SILVA CORREIA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO - HOUVE MOROSIDADE NA DESCARGA DA DS VLB E DEVIDO A ISSO GEROU TRANSIT TIME."},{"d":"2026-08-11","r":"SP2-BLV-LBD-B","drv":"PEDRO HENRIQUE PEREIRA BATISTA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP2-JER-PAR-B","drv":"GUSTAVO MATHEUS ALVES DOS SANTOS","perfil":"VUC","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":0.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP2-SRQ-BIN-B","drv":"IGOR DE SOUSA COSTA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":0.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO - CONFORME INFORMADO, O ENDEREÇO DA DS BIN ESTÁ INCORRETO NO APP E POR ESSE MOTIVO O MOTORISTA NÃO CONSEGUE DAR CHEGADA"},{"d":"2026-08-11","r":"SP2-IVA-CBV-B","drv":"EDSON VIEIRA DA SILVA","perfil":"HR","idv":"NÃO","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"SEM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP1-RCA-MGI-B","drv":"JONATHAN APARECIDO SOARES DA COSTA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":50.0,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"},{"d":"2026-08-11","r":"SP2-IPR-B","drv":"ANDRÉ ROCHA","perfil":"HR","idv":"SIM","chk":100.0,"sai":100.0,"che":100.0,"tt":null,"app":"ok","resp":"","just":"COM DEVOLUÇÃO"}],"kpis":{"occ":257,"mot":25,"rotas":630},"veic":[{"drv":"JONATHAN","placa":"DRO2E79","modelo":"IVECO 35S14","perfil":"VUC","capm":"22m³","capk":"1.500kg","chk":"13/08/2026 03:51"},{"drv":"AMON","placa":"PWR4E83","modelo":"FIAT","perfil":"FIORINO","capm":"3m³","capk":"650kg","chk":"17/08/2026 09:29"},{"drv":"VICTOR","placa":"FWX4B36","modelo":"DUCATO CHASSI","perfil":"VUC","capm":"19m³","capk":"2.500kg","chk":"23/08/2026 19:16"},{"drv":"PEDRO","placa":"EMU1638","modelo":"MODELO KIA BONGO","perfil":"HR","capm":"13m³","capk":"1.500kg","chk":"23/08/2026 19:19"},{"drv":"EDSON","placa":"FEF9D40","modelo":"SPRINTER 2014","perfil":"VUC","capm":"16m³","capk":"1.500kg","chk":"24/08/2026 09:02"},{"drv":"-","placa":"EKH7H21","modelo":"IVECO 35S14","perfil":"VUC","capm":"22m³","capk":"1.500kg","chk":"28/08/2026 22:19"},{"drv":"IGOR","placa":"UFR6H37","modelo":"MASTER CHASSIS ","perfil":"VUC","capm":"22m³","capk":"1.500kg","chk":"04/09/2026 03:18"},{"drv":"RENAN","placa":"FLJ6J13 ","modelo":"IVECO","perfil":"VUC","capm":"22m³","capk":"2.000kg","chk":"04/09/2026 19:39"},{"drv":"RENATO","placa":"QTL3E82","modelo":"FIAT DUCATO 2018 CHASSIS LONGO","perfil":"VUC","capm":"22m³","capk":"1.800kg","chk":"04/09/2026 20:48"},{"drv":"ANDRE","placa":"GKI5C32 ","modelo":"SPRINTER ","perfil":"VUC","capm":"16m³","capk":"1.500kg","chk":"08/09/2026 06:41"},{"drv":"NOEMI","placa":"FDN3E97","modelo":"ALUM FDTV","perfil":"VUC","capm":"17m³","capk":"3.500kg","chk":"08/09/2026 11:16"},{"drv":"","placa":"FTM9B10","modelo":"IVECO 35S14","perfil":"VUC","capm":"22m³","capk":"1.500kg","chk":"09/09/2026 20:36"},{"drv":"LEONEL","placa":"FKC4E06 ","modelo":"HYUNDAI","perfil":"HR","capm":"10m³","capk":"1.800kg","chk":"09/09/2026 22:02"},{"drv":"GUSTAVO","placa":"AWS2C61","modelo":"IVECO 35S14","perfil":"VUC","capm":"22m³","capk":"1.500kg","chk":"09/09/2026 22:57"}],"gen":"11/08/2026 18:56","bases":[{"sig":"SP1","nome":"GUARULHOS","end":"Av. Novo Brasil 861, Cidade Industrial Satélite de SP - (CARREGAMENTO)"},{"sig":"TBT","nome":"TAUBATÉ","end":"TAUBATÉ"},{"sig":"PMB","nome":"PINDAMINHANGABA","end":"PINDAMINHANGABA"},{"sig":"GNZ","nome":"GUAIANAZES","end":"Rua Eugenio Radiante, 249 - jd Guaianazes - SP"},{"sig":"JIR","nome":"BAIRRO COLONIA","end":"Rua Agrimensor Sugaya, 1632 - Jose Bonifacio - SP - (ZONA LESTE)"},{"sig":"SUZ","nome":"SUZANO","end":"R. Dr. Aniz Fadul 991 - Vila Maluf - SP"},{"sig":"GHO","nome":"LAUZANE PAULISTA","end":"Rua Sousa Lopes, 60 - Lauzane Paulista, São Paulo - SP, 02436-000"},{"sig":"BTV","nome":"BOITUVA","end":"R. Jonas Pazoto, 10 - Jardim America, Boituva - SP, 18550-000"},{"sig":"CQL","nome":"CERQUILHO","end":"R. Willian Thomé, 129 - Res. Di Napoli II, Cerquilho - SP, 18526-164"},{"sig":"SP2","nome":"BARUERI","end":"Av. João Vilallobo Quero, 1580 - Jardim Itaquiti, Barueri - SP, 06422-122"},{"sig":"SRQ","nome":"SÃO ROQUE","end":"Rua Águia Real 71, Jardim Carambei - São Roque - SP"},{"sig":"TAS","nome":"TABOÃO DA SERRA","end":"R. José de Castro de Faria Filho, 114 - Jardim Oliveiras, Taboão da Serra - SP, 06765-120"},{"sig":"PAR","nome":"MORUMBI","end":"R. Itamotinga, 100 - Paraíso do Morumbi, São Paulo - SP, 05706-320"},{"sig":"SPL","nome":"ARANTES","end":"Rua do Carvalho Brasileiro 646 Jd Arantes - SP"},{"sig":"CBV","nome":"CABREÚVA","end":"Tv. Manaus, 95 - Jardim Maria Cristina, Cabreúva - SP, 13315-000"},{"sig":"ANI","nome":"JARDIM ANDARAI","end":"R. Renê Carlier, 93 - Jardim Andarai, São Paulo - SP, 02168-040"},{"sig":"IVA","nome":"ITUPEVA","end":"Elvira Vicentini Poli, 49 - Jardim Itália, Itupeva - SP, 13295-000"},{"sig":"SAM","nome":"CANGAÍBA","end":"Rua Iberê da Costa Franco, 247 - Cangaíba SP - 03738-260"},{"sig":"MGI","nome":"MOGI DAS CRUZES","end":"Av Alexandrina de Paula 168 08744-090 - Vila nova Cintra"},{"sig":"RCA","nome":"MOGI DAS CRUZES","end":"Av Alexandrina de Paula 168 08744-090 - Vila nova Cintra"},{"sig":"SMO","nome":"COSMÓPOLIS","end":"Rua João Zacharias, 52 - Parque Res. Rosamelia II, Cosmópolis - SP, 13150-000"},{"sig":"MGN","nome":"MOGI MIRIM","end":"R. João Carlos da Cunha Canto, 529 - Jardim Primavera, Mogi Mirim - SP, 13806-650"},{"sig":"JDS","nome":"JARDIM SÔNIA","end":"R. Carioba, 81 - Jardim Sonia, São Paulo - SP, 02423-100"},{"sig":"SRG","nome":"SERRA NEGRA","end":"R. Juscelino Kubitschek de Oliveira, 175 - Sol Nascente, Serra Negra - SP, 13930-000"},{"sig":"SCR","nome":"SOCORRO","end":"Tv. Agenor Cecília, 20, Socorro - SP, 13960-000"},{"sig":"BLV","nome":"BELA VISTA","end":"Rua Maria José 173, Bela Vista São Paulo - SP 01324-010"},{"sig":"LBD","nome":"LIBERDADE","end":"Rua da Glória 736, Liberdade, São Paulo - SP 13104-098"},{"sig":"JER","nome":"JD ESMERALDA","end":"Rua General Syzeno Sarmento, 961 - Jardim Esmeralda, São Paulo - SP, 05366-220"},{"sig":"PAR","nome":"PARAISO DO MORUMBI","end":"Rua Itamotinga, 100 - Paraíso do Morumbi, São Paulo - SP, 05706-320"},{"sig":"IPR","nome":"VILA INVERTIDA","end":"Rua Alameda Alexandrino, 468a - Vila Invertida, São Paulo - SP, 03350-010"},{"sig":"SRQ","nome":"JARDIM CARAMBEÍ","end":"Rua Aguia Real, 61 - jardim Carambeí, São Roque - SP, 18132-250"},{"sig":"BIU","nome":"IBIÚNA","end":"Rua do progresso, 24 - Curral Ibiúna - SP, 18150-724"},{"sig":"JANI-B","nome":"JARDIM ANDARAI","end":"R. Renê Carlier, 93 - Jardim Andarai, São Paulo - SP, 02168-040"},{"sig":"CBV-B","nome":"CABREÚVA","end":"Tv. Manaus, 95 - Jardim Maria Cristina, Cabreúva - SP, 13315-000"},{"sig":"SAM-B","nome":"CANGAÍBA","end":"Rua Iberê da Costa Franco, 247 - Cangaíba SP - 03738-260"},{"sig":"RCA | MGI","nome":"MOGI DAS CRUZES","end":"Av Alexandrina de Paula 168 08744-090 - Vila nova Cintra"}],"sla":[{"d":"2026-05-01","r":"SP1-SUZ-B","tot":100.0,"resp":"SMARTRISK","qtda":28},{"d":"2026-05-01","r":"SP1-TBT-B","tot":100.0,"resp":"TRÂNSITO","qtda":0},{"d":"2026-05-02","r":"SP1-SUZ-B","tot":100.0,"resp":"FALHA MOTORISTA","qtda":1},{"d":"2026-05-02","r":"SP1-TBT-B","tot":100.0,"resp":"SISTEMA","qtda":1},{"d":"2026-05-03","r":"SP1-SUZ-B","tot":100.0,"resp":"APLICATIVO","qtda":5},{"d":"2026-05-03","r":"SP1-TBT-B","tot":100.0,"resp":"CARREGAMENTO","qtda":50},{"d":"2026-05-04","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"DS","qtda":2},{"d":"2026-05-04","r":"SP1-TBT-B","tot":100.0,"resp":"PROGRAMAÇÃO","qtda":1},{"d":"2026-05-05","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"MANUTENÇÃO DE VEÍCULO","qtda":0},{"d":"2026-05-05","r":"SP1-TBT-B","tot":75.0,"resp":"TRANSPORTADORA","qtda":0},{"d":"2026-05-06","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-05-06","r":"SP1-TBT-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-05-07","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-07","r":"SP1-TBT-PMB-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-08","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-05-08","r":"SP1-TBT-PMB-B","tot":60.0,"resp":"","qtda":0},{"d":"2026-05-08","r":"SP1-JIR-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-05-09","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-09","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-10","r":"SP1-SUZ-GNZ-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-05-10","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-11","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-05-11","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-12","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-12","r":"SP1-JIR-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-05-13","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-13","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-14","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-14","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-14","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-15","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-15","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-15","r":"SP2-BTV-CQL-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-05-15","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-15","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-16","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-16","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-16","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-16","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-16","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-17","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-17","r":"SP2-BTV-CQL-B","tot":40.0,"resp":"","qtda":0},{"d":"2026-05-17","r":"SP2-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-05-17","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-17","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-18","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-18","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-18","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-18","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-18","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-19","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-19","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-19","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-05-19","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-19","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-20","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-20","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-20","r":"SP2-BTV-CQL-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-20","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-20","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-21","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-21","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-21","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-21","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-21","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-22","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-22","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-22","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-22","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-22","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-23","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-23","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-23","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-23","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-23","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-24","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-24","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-24","r":"SP2-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-24","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-24","r":"SP2-SRQ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-25","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-25","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-25","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-25","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-26","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-26","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-05-26","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-26","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-27","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-27","r":"SP1-SUZ-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-05-27","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-27","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-27","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-28","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-28","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-28","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-28","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-28","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-29","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-29","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-29","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-29","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-29","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-30","r":"SP2-GHO-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-05-30","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-30","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-30","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-30","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-31","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-31","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-05-31","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-05-31","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-01","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-01","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-01","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-01","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-02","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-02","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-02","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-02","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP1-SUZ-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP2-TAS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP1-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"SP1-GNZ-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-03","r":"GNZ - JIR","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP2-GHO-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP2-TAS-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-04","r":"SP1-GNZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP2-TAS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP1-SPL-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-05","r":"SP2-PAR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP2-TAS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-06","r":"SP1-GNZ-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP2-TAS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-07","r":"SP1-SUZ-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-08","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-08","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-08","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-08","r":"SP1-SPL-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-09","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-09","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-09","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-09","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP1-GNZ","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-10","r":"SP2-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP2-GHO-JANI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP1-GNZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-11","r":"SP2-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP2-GHO-JANI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-12","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP1-SAM-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP2-BTV-CQL-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-13","r":"SP2-JANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP2-SMO-MGN-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP1-SAM-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP2-GHO-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-14","r":"GNZ-JIR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-15","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-16","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP1-SAM-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP2-GHO-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP2-BTV-CQL-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-17","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP1-SAM-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-18","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP1-SPL-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-19","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-20","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-21","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP1-SUZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-22","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-23","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-24","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP2-GHO-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP1-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-25","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-26","r":"SP1-RCA-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP1-SPL-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-27","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP2-GHO-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP1-RCA-MGI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-28","r":"SP2-ANI-B","tot":25.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP2-GHO-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-06-30","r":"SP2-PIX-PIB-B","tot":25.0,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-01","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP2-GHO-JDS-B","tot":80.0,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-02","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-03","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-04","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP1-SUZ-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-05","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-07","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-08","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-09","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP2-GHO-JDS-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-10","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP1-RCA-MGI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-11","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP2-BTV-CQL-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-12","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-13","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-13","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-13","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-13","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP1-SPL-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP2-IVA-CBV-B","tot":80.0,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-14","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP2-GHO-JDS-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP2-SCR-SRG-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-15","r":"SP2-ANI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP2-SCR-SRG-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP1-SUZ-GNZ-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP1-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-16","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP2-SCR-SRG-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-17","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP2-SCR-SRG-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-18","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-19","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-21","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP2-BLV-LBD-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-22","r":"SP1-RCA-MGI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP2-BLV-LBD-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-23","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-24","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-JER-PAR-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-SRQ-BIU-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-25","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-PQP-JPL-EBG-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-JER-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-SRQ-BIU-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-26","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP1-VLB-SPL-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-JER-PAR-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-SRQ-BIU-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-28","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-PQP-JPL-EBG-B","tot":33.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-JER-PAR-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-SRQ-BIU-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-29","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-PQP-JPL-EBG-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-JER-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-SRQ-BIU-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-IVA-CBV-B","tot":80.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP1-RCA-MGI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-30","r":"SP2-PAR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-JER-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-SRQ-BIU-BIN-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-07-31","r":"SP2-PAR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-JER-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-SRQ-BIU-BIN-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-IVA-CBV-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-01","r":"SP2-PAR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-GHO-JDS-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-JER-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-SRQ-BIN-BIU-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-02","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-JER-PAR-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-SRQ-BIU-BIN-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP2-IVA-CBV-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-04","r":"SP1-RCA-MGI-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-JER-PAR-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-SRQ-BIU-BIN-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-05","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-SCR-SRG-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-JER-PAR-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-SRQ-BIU-BIN-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-06","r":"SP1-RCA-MGI-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-SCR-SRG-B","tot":75.0,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-JER-PAR-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-SRQ-BIN-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-07","r":"SP1-RCA-MGI-B","tot":50.0,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-GHO-JDS-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-BLV-LBD-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-JER-PAR-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-SRQ-BIN-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-08","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-BTV-CQL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-SCR-SRG-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP1-SUZ-GNZ-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP1-VLB-SPL-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-JER-B","tot":100.0,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-SRQ-BIN-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-09","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-GHO-JDS-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-BTV-CQL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP1-SUZ-GNZ-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP1-VLB-SPL-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-BLV-LBD-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-JER-PAR-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-SRQ-BIN-B","tot":66.67,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-IVA-CBV-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP1-RCA-MGI-B","tot":83.33,"resp":"","qtda":0},{"d":"2026-08-11","r":"SP2-IPR-B","tot":100.0,"resp":"","qtda":0}],"mots":[{"drv":"MATHEUS GOMES GUIMARÃES","rotas":0,"sla":null},{"drv":"RENATO DE OLIVEIRA CORREA","rotas":93,"sla":92.4},{"drv":"ANDRÉ ROCHA","rotas":71,"sla":98.6},{"drv":"AMON PORTELA BERNARDO","rotas":22,"sla":93.6},{"drv":"ANDERSON LUIS DIAS","rotas":4,"sla":93.8},{"drv":"NOEMI DINIZ","rotas":80,"sla":91.6},{"drv":"LEANDRO GONÇALVES ANTUNES NUNES","rotas":8,"sla":81.5},{"drv":"JONATHAN APARECIDO SOARES DA COSTA","rotas":19,"sla":81.6},{"drv":"GABRIEL CAIRO LOMBA","rotas":1,"sla":66.7},{"drv":"RENAN DA SILVA CORREIA","rotas":85,"sla":96.0},{"drv":"GUSTAVO MATHEUS ALVES DOS SANTOS","rotas":47,"sla":80.6},{"drv":"EDSON VIEIRA DA SILVA","rotas":14,"sla":78.6},{"drv":"HEITOR PEREIRA DA SILVA","rotas":52,"sla":80.2},{"drv":"ARIEL SILVA VIEIRA","rotas":0,"sla":null},{"drv":"LEONEL SILVA CORDEIRO","rotas":53,"sla":93.7},{"drv":"VICTOR MOURA SILVA","rotas":26,"sla":82.4},{"drv":"IGOR DE SOUSA COSTA","rotas":11,"sla":72.7},{"drv":"PEDRO HENRIQUE PEREIRA BATISTA","rotas":35,"sla":89.0},{"drv":"BRUNA DE SOUSA GOMES","rotas":5,"sla":90.0}]};
+
+var SLA = RAW.sla || [];
+var MOTS = RAW.mots || [];
+var BASE = RAW.base || [];
+var BASES = RAW.bases || [];
+var VEIC = RAW.veic || [];
+var KPIS = RAW.kpis || {};
+
+var PALETTE = ["#F58634","#FFB400","#E59A00","#C2410C","#FF8A65","#FFD54F","#9E9E9E","#616161","#D95F0B","#37474F"];
+var C_OK = "#2E7D32", C_BAD = "#D93025", C_WARN = "#E59A00";
+
+var sigMap = {};
+BASES.forEach(function(b){ if(b.sig && !sigMap[b.sig]) sigMap[b.sig]=b.nome; });
+
+function decodeRota(r){
+  if(!r) return "";
+  var parts = String(r).split("-").filter(function(x){ return x!==""; });
+  if(!parts.length) return r;
+  var out = [];
+  parts.forEach(function(p){
+    if(p==="B") return;
+    out.push(sigMap[p] || p);
+  });
+  var last = parts[parts.length-1];
+  if(last==="B") out.push("(volta)");
+  return out.join(" → ");
+}
+function isOcorr(r){ return r.tot!=null && r.tot < 100; }
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmt(n){ return (n==null||isNaN(n)) ? "-" : Number(n).toLocaleString("pt-BR"); }
+function fmtPct(n){ return (n==null||isNaN(n)) ? "-" : n.toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"; }
+function fnum(v){ return (v==null||v==="") ? 0 : v; }
+function badgeSla(tot){
+  if(tot==null||isNaN(tot)) return '<span class="badge neutral">—</span>';
+  return '<span class="badge '+(tot>=100?"ok":tot>=80?"warn":"bad")+'">'+fmtPct(tot)+'</span>';
+}
+
+var state = { r:"*", from:null, to:null };
+
+function filtered(){
+  return SLA.filter(function(r){
+    if(state.r!=="*" && r.r!==state.r) return false;
+    if(state.from && r.d < state.from) return false;
+    if(state.to && r.d > state.to) return false;
+    return r.d!=="";
+  });
+}
+
+function groupBy(arr, keyFn){
+  var map = {};
+  arr.forEach(function(r){
+    var k = keyFn(r);
+    if(k==null) k = "";
+    if(!map[k]) map[k] = [];
+    map[k].push(r);
+  });
+  return Object.keys(map).map(function(k){ return { key:k, rows:map[k], n:map[k].length }; });
+}
+
+function avgSla(rows){ if(!rows.length) return null; var s=0; rows.forEach(function(r){ s+=fnum(r.tot); }); return s/rows.length; }
+
+/* ---------- renderers ---------- */
+function hbars(el, items, opts){
+  opts = opts||{};
+  var max = opts.max || items.reduce(function(m,i){ return Math.max(m,i.value); },0) || 1;
+  if(!items.length){ el.innerHTML='<div class="empty">Sem dados para os filtros selecionados.</div>'; return; }
+  el.innerHTML = items.map(function(i){
+    return '<div class="hrow"><div class="hlabel" title="'+esc(i.label)+'">'+esc(i.label)+'</div>'+
+      '<div class="hbar"><div class="hbar-fill" style="width:'+(i.value/max*100)+'%;background:'+(i.color||"var(--primary)")+'"></div></div>'+
+      '<div class="hval">'+(opts.fmt?opts.fmt(i.value):fmt(i.value))+(opts.suffix||"")+'</div></div>';
+  }).join("");
+}
+
+function stackedH(el, rows){
+  if(!rows.length){ el.innerHTML='<div class="empty">Sem dados para os filtros selecionados.</div>'; return; }
+  el.innerHTML = rows.map(function(r){
+    var tot = r.a+r.b+r.c || 1;
+    var wa=(r.a/tot*100), wb=(r.b/tot*100), wc=(r.c/tot*100);
+    return '<div class="hrow stack"><div class="hlabel" title="'+esc(r.label)+'">'+esc(r.label)+'</div>'+
+      '<div class="hbar">'+
+      '<div style="width:'+wa+'%;background:'+C_BAD+'" title="Fora do prazo: '+r.a+'"></div>'+
+      '<div style="width:'+wb+'%;background:'+C_WARN+'" title="Atenção: '+r.b+'"></div>'+
+      '<div style="width:'+wc+'%;background:'+C_OK+'" title="No prazo: '+r.c+'"></div>'+
+      '</div><div class="hval">'+fmtPct(r.pct)+'</div></div>';
+  }).join("");
+}
+
+function donut(el, items){
+  var total = items.reduce(function(s,i){ return s+i.value; },0) || 1;
+  var stops=[], acc=0;
+  items.forEach(function(it){
+    var p = it.value/total*100;
+    stops.push(it.color+" "+acc.toFixed(2)+"% "+(acc+p).toFixed(2)+"%");
+    acc+=p;
+  });
+  if(!items.length){ el.innerHTML='<div class="empty">Sem dados.</div>'; return; }
+  el.innerHTML = '<div class="donut" style="background:conic-gradient('+stops.join(",")+')"></div>';
+}
+function donutLegend(el, items, total){
+  total = total || items.reduce(function(s,i){ return s+i.value; },0) || 1;
+  if(!items.length){ el.innerHTML=''; return; }
+  el.innerHTML = items.map(function(it){
+    return '<span><i class="dot" style="background:'+it.color+'"></i> '+esc(it.label)+': <b>'+fmt(it.value)+'</b> ('+fmtPct(it.value/total*100)+')</span>';
+  }).join("");
+}
+
+function lineChart(el, series, labels){
+  if(!series.length || !labels.length){ el.innerHTML='<div class="empty">Sem dados para o período selecionado.</div>'; return; }
+  var w = el.clientWidth || 960;
+  var H=300, ml=52, mr=14, mt=14, mb=36;
+  var iw = w-ml-mr, ih = H-mt-mb;
+  var px = function(i){ return labels.length===1 ? ml+iw/2 : ml+(i/(labels.length-1))*iw; };
+  var py = function(v){ return mt+ih-(v/100)*ih; };
+  var s = '<svg viewBox="0 0 '+w+' '+H+'" style="width:100%;height:auto">';
+  for(var g=0; g<=100; g+=20){ var y=py(g); s+='<line x1="'+ml+'" y1="'+y+'" x2="'+(w-mr)+'" y2="'+y+'" class="grid-line"/><text x="'+(ml-6)+'" y="'+(y+4)+'" text-anchor="end" class="axis">'+g+'%</text>'; }
+  var step = Math.max(1, Math.ceil(labels.length/8));
+  for(var i=0;i<labels.length;i++){ if(i%step===0){ var lb=labels[i].slice(5); s+='<text x="'+px(i)+'" y="'+(H-mb+16)+'" text-anchor="middle" class="axis">'+lb+'</text>'; } }
+  series.forEach(function(sr){
+    var d="", started=false;
+    sr.vals.forEach(function(v,j){
+      if(v==null){ started=false; return; }
+      d += (started?"L":"M")+px(j)+","+py(v);
+      started=true;
+    });
+    s+='<path d="'+d+'" fill="none" stroke="'+sr.color+'" stroke-width="2" stroke-linejoin="round"/>';
+  });
+  s+='</svg>';
+  el.innerHTML=s;
+}
+
+function table(el, cols, rows, opts){
+  opts=opts||{};
+  var head = '<table><thead><tr>'+cols.map(function(c){ return '<th class="'+(c.num?"num":"")+'">'+esc(c.label)+'</th>'; }).join("")+'</thead><tbody>';
+  var body = rows.map(function(r, idx){
+    var hl = opts.hl && r[opts.hlKey] && r[opts.hlKey]===opts.hl;
+    return '<tr'+(hl?' style="background:#FDF3E6;font-weight:600"':'')+'>'+cols.map(function(c){
+      var v = c.render ? c.render(r, idx) : esc(r[c.k]);
+      return '<td class="'+(c.num?"num":"")+'">'+v+'</td>';
+    }).join("")+'</tr>';
+  }).join("");
+  el.innerHTML = head+body+'</tbody></table>';
+  if(!rows.length) el.innerHTML = '<div class="empty">Sem dados para os filtros selecionados.</div>';
+}
+
+function kpi(el, label, val, sub, cls){
+  var d = document.createElement("div");
+  d.className = "kpi "+(cls||"");
+  d.innerHTML = '<div class="k-label">'+esc(label)+'</div><div class="k-val '+(cls||"")+'">'+val+'</div>'+(sub?'<div class="k-sub">'+esc(sub)+'</div>':'');
+  el.appendChild(d);
+}
+
+/* ---------- tab renderers ---------- */
+function renderGeral(rows){
+  var gk = document.getElementById("g-kpis");
+  gk.innerHTML="";
+  var tot = rows.length;
+  var sla = avgSla(rows);
+  var occ = rows.filter(isOcorr).length;
+  var routes = groupBy(rows, function(r){ return r.r; }).length;
+  kpi(gk, "SLA Geral", sla==null?"-":fmtPct(sla), "média do SLA por rota", sla==null?"":(sla>=90?"k-good":sla>=80?"k-warn":"k-bad"));
+  kpi(gk, "Total de Rotas", fmt(tot), "no período filtrado");
+  kpi(gk, "Ocorrências", fmt(occ), fmtPct(tot?occ/tot*100:0), tot&&(occ/tot)>0.2?"k-bad":(tot&&(occ/tot)>0.1?"k-warn":"k-good"));
+  kpi(gk, "Rotas Distintas", fmt(routes), "rotas diferentes no período");
+  kpi(gk, "Motoristas Ativos", fmt(KPIS.mot || groupBy(MOTS,function(m){return m.drv;}).length), "frota cadastrada");
+
+  var dates = {};
+  rows.forEach(function(r){ dates[r.d]=1; });
+  var labels = Object.keys(dates).sort();
+  var vals = labels.map(function(d){
+    var day = rows.filter(function(r){ return r.d===d; });
+    return day.length ? avgSla(day) : null;
+  });
+  lineChart(document.getElementById("g-line"), [{ label:"SLA", color:"var(--primary)", vals:vals }], labels);
+  var legend = document.getElementById("g-legend");
+  legend.innerHTML = '<span><i class="dot" style="background:var(--primary)"></i> SLA diário</span><span><i class="dot" style="background:var(--gray-l)"></i> Meta mínima 90%</span>';
+
+  var bands = [
+    { label:"< 60%", test:function(t){ return t<60; }, color:"#B3261E" },
+    { label:"60% a 79%", test:function(t){ return t>=60 && t<80; }, color:"#F58634" },
+    { label:"80% a 89%", test:function(t){ return t>=80 && t<90; }, color:"#FFB400" },
+    { label:"90% a 99%", test:function(t){ return t>=90 && t<100; }, color:"#E9E5DF" },
+    { label:"100%", test:function(t){ return t>=100; }, color:"#2E7D32" }
+  ];
+  var dist = bands.map(function(b){ return { label:b.label, value:rows.filter(function(r){ return b.test(r.tot); }).length, color:b.color }; });
+  hbars(document.getElementById("g-dist"), dist, { fmt:function(v){ return v+" rotas"; } });
+
+  var occRows = rows.filter(isOcorr).sort(function(a,b){ return a.d<b.d?-1:1; }).slice(0,300);
+  table(document.getElementById("g-occ"), [
+    {render:function(r){ return r.d.slice(8)+"/"+r.d.slice(5,7)+"/"+r.d.slice(0,4); }, label:"Data"},
+    {k:"r", label:"Rota"},
+    {render:function(r){ return esc(decodeRota(r.r)); }, label:"Percurso"},
+    {render:function(r){ return badgeSla(r.tot); }, label:"SLA", num:true},
+    {k:"resp", label:"Responsabilidade"},
+    {render:function(r){ return r.qtda?fmt(r.qtda):"—"; }, label:"Qtde", num:true}
+  ], occRows, {});
+}
+
+function renderRotas(rows){
+  var byR = groupBy(rows, function(r){ return r.r; });
+  var data = byR.map(function(o){
+    var occ = o.rows.filter(isOcorr).length;
+    return { key:o.key, bases:decodeRota(o.key), tot:o.n, occ:occ, pct:o.n?occ/o.n*100:0, sla:avgSla(o.rows) };
+  });
+  data.sort(function(a,b){ return b.occ-a.occ || b.pct-a.pct; });
+
+  table(document.getElementById("r-table"), [
+    {k:"key", label:"Rota"},
+    {k:"bases", label:"Percurso"},
+    {render:function(r){ return fmt(r.tot); }, label:"Rotas", num:true},
+    {render:function(r){ return '<b style="color:'+C_BAD+'">'+fmt(r.occ)+'</b>'; }, label:"Ocorrências", num:true},
+    {render:function(r){ return '<span class="badge '+(r.pct>=30?"bad":r.pct>=15?"warn":"ok")+'">'+fmtPct(r.pct)+'</span>'; }, label:"% Ocorr.", num:true},
+    {render:function(r){ return badgeSla(r.sla); }, label:"SLA Médio", num:true}
+  ], data, {});
+
+  hbars(document.getElementById("r-chart"), data.slice(0,12).map(function(d,i){ return { label:d.key, value:d.occ, color:PALETTE[i%PALETTE.length] }; }),
+    { fmt:function(v){ return v+" rotas"; } });
+
+  var best = data.slice().sort(function(a,b){ return (b.sla||0)-(a.sla||0); });
+  hbars(document.getElementById("r-best"), best.slice(0,12).map(function(d,i){ return { label:d.key, value:d.sla, color:PALETTE[i%PALETTE.length] }; }),
+    { suffix:"%", fmt:function(v){ return fmtPct(v); } });
+}
+
+function renderMot(){
+  var mk = document.getElementById("m-kpis");
+  mk.innerHTML="";
+  var ativos = MOTS.filter(function(m){ return m.rotas>0; }).slice().sort(function(a,b){ return (b.sla||0)-(a.sla||0); });
+  var totalRotas = ativos.reduce(function(s,m){ return s+m.rotas; },0);
+  var melhor = ativos[0];
+  var pior = ativos.length? ativos[ativos.length-1] : null;
+  kpi(mk, "Motoristas Ativos", fmt(KPIS.mot || ativos.length), "com rotas no período");
+  kpi(mk, "Total de Rotas", fmt(totalRotas), "somadas todos os motoristas");
+  if(melhor) kpi(mk, "Melhor Motorista", esc(melhor.drv), fmt(melhor.rotas)+" rotas · "+fmtPct(melhor.sla), "k-good");
+  if(pior) kpi(mk, "Pior Motorista", esc(pior.drv), fmt(pior.rotas)+" rotas · "+fmtPct(pior.sla), "k-bad");
+
+  table(document.getElementById("m-table"), [
+    {render:function(r,i){ return '<span class="pos '+(i<3?"t"+(i+1):"")+'">'+(i+1)+'</span>'; }, label:"#", num:true},
+    {k:"drv", label:"Motorista"},
+    {render:function(r){ return fmt(r.rotas); }, label:"Rotas", num:true},
+    {render:function(r){ return badgeSla(r.sla); }, label:"SLA Médio", num:true}
+  ], ativos, {});
+
+  hbars(document.getElementById("m-best"), ativos.slice(0,8).map(function(m){ return { label:m.drv, value:m.sla, color:C_OK }; }),
+    { suffix:"%", fmt:function(v){ return fmtPct(v); } });
+  hbars(document.getElementById("m-worst"), ativos.slice(-8).reverse().map(function(m){ return { label:m.drv, value:m.sla, color:C_BAD }; }),
+    { suffix:"%", fmt:function(v){ return fmtPct(v); } });
+}
+
+function renderOcc(rows){
+  var ok = document.getElementById("o-kpis");
+  ok.innerHTML="";
+  var occ = rows.filter(isOcorr);
+  var sla = avgSla(occ);
+  kpi(ok, "Ocorrências", fmt(occ.length), fmtPct(rows.length?occ.length/rows.length*100:0));
+  kpi(ok, "SLA Médio das Ocorrências", sla==null?"-":fmtPct(sla), "média das rotas atrasadas", "k-bad");
+  kpi(ok, "Rotas Analisadas", fmt(rows.length), "no período filtrado");
+  kpi(ok, "Pior SLA Registrado", occ.length?fmtPct(Math.min.apply(null, occ.map(function(r){ return r.tot; }))):"-", "menor SLA do período", "k-bad");
+
+  var occRows = occ.slice().sort(function(a,b){ return a.tot-b.tot; });
+  table(document.getElementById("o-table"), [
+    {render:function(r){ return r.d.slice(8)+"/"+r.d.slice(5,7)+"/"+r.d.slice(0,4); }, label:"Data"},
+    {k:"r", label:"Rota"},
+    {render:function(r){ return esc(decodeRota(r.r)); }, label:"Percurso"},
+    {render:function(r){ return badgeSla(r.tot); }, label:"SLA", num:true},
+    {k:"resp", label:"Responsabilidade"},
+    {render:function(r){ return r.qtda?fmt(r.qtda):"—"; }, label:"Qtde", num:true}
+  ], occRows, {});
+}
+
+function renderBase(){
+  var bk = document.getElementById("b-kpis");
+  bk.innerHTML="";
+  var dias = {};
+  BASE.forEach(function(r){ if(r.d) dias[r.d]=1; });
+  var datas = Object.keys(dias).sort();
+  var ultima = datas.length? datas[datas.length-1] : "";
+  kpi(bk, "Base do Dia", ultima?ultima.slice(8)+"/"+ultima.slice(5,7)+"/"+ultima.slice(0,4):"—", "última data na base");
+  kpi(bk, "Rotas do Dia", fmt(BASE.length), "rotas programadas na base");
+
+  var cols = [
+    {render:function(r){ return r.d.slice(8)+"/"+r.d.slice(5,7)+"/"+r.d.slice(0,4); }, label:"Data"},
+    {k:"r", label:"Rota"},
+    {render:function(r){ return esc(decodeRota(r.r)); }, label:"Percurso"},
+    {k:"drv", label:"Motorista"},
+    {k:"perfil", label:"Perfil"},
+    {k:"idv", label:"Ida e Volta"},
+    {k:"resp", label:"Responsabilidade"},
+    {k:"just", label:"Justificativa"}
+  ];
+  var rows = BASE.slice().sort(function(a,b){ return a.r<b.r?-1:1; });
+  table(document.getElementById("b-table"), cols, rows, {});
+}
+
+function badgePct(v){
+  if(v==null||isNaN(v)) return '<span class="badge neutral">—</span>';
+  return '<span class="badge '+(v>=100?"ok":v>=80?"warn":"bad")+'">'+fmtPct(v)+'</span>';
+}
+function badgeApp(a){
+  if(a==="ok") return '<span class="badge ok">Usou o app</span>';
+  if(a==="fora") return '<span class="badge bad">Fora do prazo</span>';
+  return '<span class="badge neutral">Sem registro</span>';
+}
+function pctAvg(arr, key){
+  var vals = arr.map(function(r){ return r[key]; }).filter(function(v){ return v!=null && !isNaN(v); });
+  if(!vals.length) return null;
+  return vals.reduce(function(s,v){ return s+v; },0)/vals.length;
+}
+function routeTotal(r){
+  var vals = [r.chk, r.sai, r.che, r.tt, (r.app==="ok"?100:r.app==="fora"?0:null)];
+  vals = vals.filter(function(v){ return v!=null && !isNaN(v); });
+  if(!vals.length) return null;
+  return vals.reduce(function(s,v){ return s+v; },0)/vals.length;
+}
+function badgeTotal(t){
+  if(t==null||isNaN(t)) return '<span class="badge neutral">—</span>';
+  return '<span class="badge '+(t>=80?"ok":t>=60?"warn":"bad")+'">'+fmtPct(t)+'</span>';
+}
+function renderInd(){
+  var ik = document.getElementById("i-kpis");
+  ik.innerHTML="";
+  var rows = BASE.slice().sort(function(a,b){ return a.r<b.r?-1:1; });
+  var n = rows.length;
+  var avgChk = pctAvg(rows,"chk"), avgSai = pctAvg(rows,"sai"), avgChe = pctAvg(rows,"che"), avgTT = pctAvg(rows,"tt");
+  var okApp = rows.filter(function(r){ return r.app==="ok"; }).length;
+  var tots = rows.map(routeTotal).filter(function(v){ return v!=null; });
+  var avgTot = tots.length?tots.reduce(function(s,v){ return s+v; },0)/tots.length:null;
+
+  kpi(ik, "Check-in (média)", avgChk==null?"-":fmtPct(avgChk), "média de % CHECK-IN das rotas", avgChk!=null?(avgChk<100?"k-bad":avgChk<90?"k-warn":"k-good"):"");
+  kpi(ik, "Saída (média)", avgSai==null?"-":fmtPct(avgSai), "média de % SAIDA das rotas", avgSai!=null?(avgSai<100?"k-bad":avgSai<90?"k-warn":"k-good"):"");
+  kpi(ik, "Chegada (média)", avgChe==null?"-":fmtPct(avgChe), "média de % CHEG por base", avgChe!=null?(avgChe<100?"k-bad":avgChe<90?"k-warn":"k-good"):"");
+  kpi(ik, "Transit Time (média)", avgTT==null?"-":fmtPct(avgTT), "média de % TRANSIT TIME", avgTT!=null?(avgTT<100?"k-bad":avgTT<90?"k-warn":"k-good"):"");
+  kpi(ik, "Uso do App", n?fmtPct(okApp/n*100):"-", okApp+" de "+fmt(n)+" rotas usaram o app no prazo", n&&okApp<n?"k-warn":"k-good");
+  kpi(ik, "Total (20% cada)", avgTot==null?"-":fmtPct(avgTot), "média dos totais das rotas (cada indicador vale 20%)", avgTot!=null?(avgTot<80?"k-bad":avgTot<90?"k-warn":"k-good"):"");
+
+  hbars(document.getElementById("i-chart"), [
+    {label:"Check-in", value:avgChk, color:PALETTE[0]},
+    {label:"Saída", value:avgSai, color:PALETTE[1]},
+    {label:"Chegada", value:avgChe, color:PALETTE[2]},
+    {label:"Transit Time", value:avgTT, color:PALETTE[3]},
+    {label:"Uso do App", value:n?okApp/n*100:null, color:PALETTE[4]},
+    {label:"Total", value:avgTot, color:PALETTE[5]}
+  ].filter(function(i){ return i.value!=null && !isNaN(i.value); }), { suffix:"%", fmt:function(v){ return fmtPct(v); } });
+
+  var fora = rows.filter(function(r){ return r.app==="fora"; });
+  var appItems = [
+    { label:"Usou o app no prazo", value:okApp, color:C_OK },
+    { label:"Fora do prazo", value:fora.length, color:C_BAD }
+  ];
+  var ad = document.getElementById("i-app-donut");
+  if(!n){ ad.innerHTML='<div class="empty">Sem dados.</div>'; }
+  else {
+    var total = okApp+fora.length;
+    ad.innerHTML = '<div class="donut-wrap"><div class="donut" style="background:'+
+      'conic-gradient('+C_OK+' 0% '+(total?(okApp/total*100):0).toFixed(2)+'%,'+C_BAD+' '+(total?(okApp/total*100):0).toFixed(2)+'% 100%)"></div>'+
+      '<div class="legend" style="flex-direction:column;align-items:flex-start">'+
+      appItems.map(function(it){ return '<span><i class="dot" style="background:'+it.color+'"></i> '+esc(it.label)+': <b>'+fmt(it.value)+'</b></span>'; }).join("")+
+      '</div></div>';
+  }
+  var obs = document.getElementById("i-app-obstacles");
+  if(fora.length){
+    obs.innerHTML = '<div style="font-size:12px;color:var(--gray);margin-top:10px"><b>Obstáculos encontrados:</b></div>'+
+      fora.map(function(r){ return '<span style="display:block;font-size:12px;margin-top:6px"><b>'+esc(r.r)+'</b> — '+(esc(r.just||r.resp||"sem justificativa"))+'</span>'; }).join("");
+  } else {
+    obs.innerHTML = '<div style="font-size:12px;color:var(--gray);margin-top:10px">Nenhuma rota com check-in ou partida fora do prazo hoje.</div>';
+  }
+
+  table(document.getElementById("i-table"), [
+    {render:function(r){ return r.d.slice(8)+"/"+r.d.slice(5,7)+"/"+r.d.slice(0,4); }, label:"Data"},
+    {k:"r", label:"Rota"},
+    {render:function(r){ return esc(decodeRota(r.r)); }, label:"Percurso"},
+    {k:"drv", label:"Motorista"},
+    {render:function(r){ return badgePct(r.chk); }, label:"Check-in", num:true},
+    {render:function(r){ return badgePct(r.sai); }, label:"Saída", num:true},
+    {render:function(r){ return badgePct(r.che); }, label:"Chegada", num:true},
+    {render:function(r){ return badgePct(r.tt); }, label:"Transit Time", num:true},
+    {render:function(r){ return badgeApp(r.app); }, label:"App"},
+    {render:function(r){ return badgeTotal(routeTotal(r)); }, label:"Total (20% cada)", num:true},
+    {k:"just", label:"Obstáculo / Justificativa"}
+  ], rows, {});
+}
+
+function renderInfra(){
+  var byS = {};
+  BASES.forEach(function(b){
+    var k = b.sig+"|"+b.nome;
+    if(!byS[k]) byS[k]=b;
+  });
+  var bases = Object.keys(byS).map(function(k){ return byS[k]; });
+  table(document.getElementById("i-bases"), [
+    {k:"sig", label:"Sigla"},
+    {k:"nome", label:"Base"},
+    {k:"end", label:"Endereço"}
+  ], bases, {});
+
+  table(document.getElementById("i-veic"), [
+    {k:"drv", label:"Motorista"},
+    {k:"placa", label:"Placa"},
+    {k:"modelo", label:"Modelo"},
+    {k:"perfil", label:"Perfil"},
+    {k:"capm", label:"Cap. (m³)"},
+    {k:"capk", label:"Cap. (kg)"},
+    {k:"chk", label:"Val. Checklist"}
+  ], VEIC, {});
+}
+
+/* ---------- rendering dispatch ---------- */
+var RENDER = {
+  geral: renderGeral,
+  rotas: renderRotas,
+  mot: renderMot,
+  occ: renderOcc,
+  base: renderBase,
+  ind: renderInd,
+  infra: renderInfra
+};
+
+function renderAll(){
+  var rows = filtered();
+  var ctx = document.getElementById("ctxInfo");
+  ctx.innerHTML = "<b>"+fmt(rows.length)+"</b> rotas · Rota: <b>"+(state.r==="*"?"Todas":esc(state.r))+"</b> · Período: "+(state.from?state.from.slice(8,10)+"/"+state.from.slice(5,7)+"/"+state.from.slice(0,4):"início")+" a "+(state.to?state.to.slice(8,10)+"/"+state.to.slice(5,7)+"/"+state.to.slice(0,4):"hoje");
+  var active = document.querySelector(".tab.active").getAttribute("data-tab");
+  RENDER[active](rows);
+}
+
+/* ---------- init ---------- */
+function init(){
+  var sel = document.getElementById("fR");
+  var opts = ['<option value="*">Todas as rotas</option>'];
+  SLA.map(function(r){ return r.r; }).filter(function(v,i,a){ return a.indexOf(v)===i; }).sort().forEach(function(r){
+    opts.push('<option value="'+esc(r)+'">'+esc(r)+'</option>');
+  });
+  sel.innerHTML = opts.join("");
+  sel.addEventListener("change", function(){ state.r = sel.value; renderAll(); });
+
+  document.getElementById("fPresets").addEventListener("click", function(e){
+    if(e.target.tagName!=="BUTTON") return;
+    var p = e.target.getAttribute("data-p");
+    var from=null, to=null;
+    var map = { Maio:["2026-05-01","2026-05-31"], Junho:["2026-06-01","2026-06-30"], Julho:["2026-07-01","2026-07-31"], Agosto:["2026-08-01","2026-08-31"] };
+    if(map[p]){ from=map[p][0]; to=map[p][1]; }
+    state.from=from; state.to=to;
+    document.getElementById("fFrom").value = from||"";
+    document.getElementById("fTo").value = to||"";
+    document.querySelectorAll("#fPresets button").forEach(function(b){ b.classList.toggle("active", b===e.target); });
+    renderAll();
+  });
+
+  var fFrom = document.getElementById("fFrom"), fTo = document.getElementById("fTo");
+  var minD = SLA.reduce(function(m,r){ return r.d && (!m||r.d<m)? r.d : m; }, null);
+  var maxD = SLA.reduce(function(m,r){ return r.d && (!m||r.d>m)? r.d : m; }, null);
+  fFrom.min=minD; fFrom.max=maxD; fTo.min=minD; fTo.max=maxD;
+  fFrom.addEventListener("change", function(){
+    state.from = fFrom.value||null;
+    if(state.from && (!state.to || state.to<state.from)){ fTo.value=state.from; state.to=state.from; }
+    renderAll();
+  });
+  fTo.addEventListener("change", function(){
+    state.to = fTo.value||null;
+    if(state.to && (!state.from || state.from>state.to)){ fFrom.value=state.to; state.from=state.to; }
+    renderAll();
+  });
+
+  document.querySelectorAll(".tab").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("active", x===b); });
+      document.querySelectorAll(".tab-pane").forEach(function(p){ p.classList.toggle("active", p.id==="tab-"+b.getAttribute("data-tab")); });
+      renderAll();
+    });
+  });
+
+  renderAll();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
